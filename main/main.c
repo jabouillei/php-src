@@ -1124,11 +1124,16 @@ static void php_error_cb(int type, const char *error_filename, const uint error_
 		case E_PARSE:
 		case E_COMPILE_ERROR:
 		case E_USER_ERROR:
-			EG(exit_status) = 255;
+			/* eval() errors do not affect exit_status */
+			if (EG(current_execute_data)->opline->extended_value != ZEND_EVAL) {
+				EG(exit_status) = 255;
+			}
 			if (module_initialized) {
 				if (!PG(display_errors) &&
 				    !SG(headers_sent) &&
-					SG(sapi_headers).http_response_code == 200
+					SG(sapi_headers).http_response_code == 200 &&
+				/* eval() errors do not affect response code */
+				    EG(current_execute_data)->opline->extended_value != ZEND_EVAL
 				) {
 					sapi_header_line ctr = {0};
 
